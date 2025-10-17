@@ -29,33 +29,27 @@ def actiontomessage(action):
     
     return message
     
+ua = 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0'
 
-
-
-
-
-
-#videoid = '_uMuuHk_KkQ' #Lofi-Girl Live stream 
-#videoid = 'GbDP3OGOZQI' #RAT GAMING
-#videoid='cRcbP49Whks' #ROCK GAMING
-#videoid='lopZYsUlvVs' #ROCK&RAT Watch Redline
-#videoid='9TWGD7d_lW4' #ROCK&RAT Smash
-#videoid='Ih1gKruIga8' #K9 somethingorother i only caught the end
-#videoid='aJ_U6Ne1TG4' # Penrose Picross
-videoid="X_u8nARoQ4g" # Penrose on Saturday (hasn't started yet)
-videoid="FiorXVBFGns"
-videoid="XMnNkFQ5TuQ" # Mint HL2 P4
-videoid="GVQssViawcI" # Mint waterpark
-
-videoid=sys.argv[1]
-if len(videoid) != 11:
-    print("bad videoid")
-    exit()
-
+if len(sys.argv) == 2:
+    arg = sys.argv[1]
+    if arg[0] == '@':
+        page = requests.get("https://www.youtube.com/"+arg+"/live").text
+        found = re.findall('url":"/'+arg+'/live",(.+?)"videoId":"(.+?)"', page)
+        if len(found) == 0:
+            print("No Live Streams available for that channel. Check your spelling, or provide a video ID.", file=sys.stderr)
+            exit()
+        else:
+            videoid=found[0][1] # If you ever get an exception here, that means that the initial live page has changed construction. Let me know about it, and then provide a stream videoid instead.
+    elif len(arg) == 11:
+        videoid=arg
+    else:
+        print("bad argument")
+        exit()
 
 url = "https://www.youtube.com/live_chat?v=" + videoid
 
-ua = 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0'
+
 
 
 
