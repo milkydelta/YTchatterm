@@ -41,6 +41,8 @@ def actiontomessage(action):
 #videoid='Ih1gKruIga8' #K9 somethingorother i only caught the end
 #videoid='aJ_U6Ne1TG4' # Penrose Picross
 videoid="X_u8nARoQ4g" # Penrose on Saturday (hasn't started yet)
+videoid="FiorXVBFGns"
+videoid="XMnNkFQ5TuQ" # Mint HL2 P4
 
 
 url = "https://www.youtube.com/live_chat?v=" + videoid
@@ -115,6 +117,9 @@ while True:
                     print("MEMBER "+member_name+" HAS SENT A BIG MESSAGE. I'M NOT SAYING WHAT IT IS.")
                 elif "liveChatPlaceholderItemRenderer" in action["addChatItemAction"]["item"]:# found this during a test on 2025-08-22. I'm not sure what it is. The exception meant I couldnt crosscheck the id with later msgs
                     print("PLACEHOLDER!   ID:"+action["addChatItemAction"]["item"]["liveChatPlaceholderItemRenderer"]["id"])
+                elif "liveChatSponsorshipsGiftPurchaseAnnouncementRenderer" in action["addChatItemAction"]["item"]: # found this at 00:30 on 2025-08-31. It's for gifted memberships. I can't believe I didn't think of it b4.
+                    render=action["addChatItemAction"]["item"]["liveChatSponsorshipsGiftPurchaseAnnouncementRenderer"]
+                    print("PERSON "+render["authorName"]["simpleText"]+" GIFTED SOME MEMBERSHIPS TO THE AUDIENCE")
                 else: # regular chat messages
                     txtmsg = action["addChatItemAction"]["item"]["liveChatTextMessageRenderer"]
                     author_name = txtmsg["authorName"]["simpleText"]
