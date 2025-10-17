@@ -5,6 +5,7 @@ import requests
 import re
 import time
 import json
+import traceback
 
 def actiontomessage(action):
     message=""
@@ -30,7 +31,10 @@ def actiontomessage(action):
 
 
 #videoid = '_uMuuHk_KkQ' #Lofi-Girl Live stream 
-videoid = '6pqGVd4xhrY' #Kanata Elden Ring
+#videoid = 'GbDP3OGOZQI' #RAT GAMING
+#videoid='cRcbP49Whks' #ROCK GAMING
+#videoid='lopZYsUlvVs' #ROCK&RAT Watch Redline
+videoid='9TWGD7d_lW4' #ROCK&RAT Smash
 ua = 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0'
 #ua= 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36'
 
@@ -51,13 +55,13 @@ except Exception as e:
     print(re.findall('continuation":"(.+?)"', initial))
     with open("bugger.html", "w") as text_file:
         text_file.write(r.text)
-
+    print("if 'index out of range', i could not find a continuation when I queried the live chat page. Are you sure that the video ID is for a *current* livestream? I dumped the page to 'bugger.html'.")
     exit()
 
 #The "key" is the api key that the youtube website uses to talk to the internal YouTube API. It is not an API key for my personal account.
 #If it stops working, the new key would be inside the html page we fetch above. It's called INNERTUBE_API_KEY somewhere in the JS.
-conturl="https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"  #parsing prettyprinted might have a performance impact, but it's easier to debug.
-#conturl="https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8&prettyPrint=false"
+#conturl="https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"  #parsing prettyprinted might have a performance impact, but it's easier to debug.
+conturl="https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8&prettyPrint=false"
 
 while True:
     #print("loopBegins")
@@ -88,19 +92,43 @@ while True:
         continue
 
     for action in actions:
-        if "addChatItemAction" in action:
-            author_name=action["addChatItemAction"]["item"]["liveChatTextMessageRenderer"]["authorName"]["simpleText"]
-            print(author_name+": "+actiontomessage(action))
-        elif "addBannerToLiveChatCommand" in action:
-            print("BANNER DETECTED! SKIPPING!")
-        elif "removeChatItemAction" in action:
-            print('{"removeChatItemAction": {"targetItemId": "SomeItemID"}}')
-        else:
-            print("UNKNOWN ACTION DETECTED! DUMPING ACTION!")
-            print("#######################################")
-            print(json.dumps(action)[0:150])
-            print("#######################################")
-        continue
+        try:
+
+            if "addChatItemAction" in action:
+                if "liveChatPaidMessageRenderer" in action["addChatItemAction"]["item"]: #Paid Messages hava a different JSON message to regular chats. I'll decipher later.
+                    cashman_name=action["addChatItemAction"]["item"]["liveChatPaidMessageRenderer"]["authorName"]["simpleText"]
+                    print(cashman_name+ " PAID SOME MONEY FOR A MESSAGE.")
+                    continue
+                elif "liveChatMembershipItemRenderer" in action["addChatItemAction"]["item"]: #same goes for the big messages that members sometimes send.
+                    member_name=action["addChatItemAction"]["item"]["liveChatMembershipItemRenderer"]["authorName"]["simpleText"]
+                    print("MEMBER "+member_name+" HAS SENT A BIG MESSAGE. I'M NOT SAYING WHAT IT IS.")
+                    continue
+                author_name=action["addChatItemAction"]["item"]["liveChatTextMessageRenderer"]["authorName"]["simpleText"]
+                message_id= action["addChatItemAction"]["item"]["liveChatTextMessageRenderer"]["id"]
+                timestamp= action["addChatItemAction"]["item"]["liveChatTextMessageRenderer"]["timestampUsec"]
+                print(timestamp+"  "+message_id[0:15]+"  "+author_name.ljust(15, ' ')+":   "+actiontomessage(action)[0:180])
+            elif "addBannerToLiveChatCommand" in action:
+                print("BANNER DETECTED! SKIPPING!")
+            elif "removeChatItemAction" in action:
+                print('{"removeChatItemAction": {"targetItemId": "SomeItemID"}}')
+            elif "addLiveChatTickerItemAction" in action: #I think this updates the list of recent money-related things to happen in chat recently.
+                print("TICKER UPDATE WEEWOO WEEWOO WEEWOO")
+            else:
+                print("UNKNOWN ACTION DETECTED! DUMPING ACTION!")
+                print("#######################################")
+                print(json.dumps(action))
+                print("#######################################")
+                exit();
+        except Exception as e:
+            print("BIG IF FAILED! BAILING!\n")
+           # print(json.dumps(action)[0:100])
+            print("\n")
+            print(json.dumps(action))
+            print("#########################")
+            print(traceback.format_exc())
+            exit()
+
+        continue # continue statement after if block means the rest of this won't execute'
         
         
         try:
