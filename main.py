@@ -7,6 +7,8 @@ import time
 import json
 import traceback
 
+import sys
+
 
 # This function name is self explanatory, but it only works for regular chat messages.
 # Superchats and those big green messages that members sometimes send will not be printed.
@@ -43,6 +45,12 @@ def actiontomessage(action):
 videoid="X_u8nARoQ4g" # Penrose on Saturday (hasn't started yet)
 videoid="FiorXVBFGns"
 videoid="XMnNkFQ5TuQ" # Mint HL2 P4
+videoid="GVQssViawcI" # Mint waterpark
+
+videoid=sys.argv[1]
+if len(videoid) != 11:
+    print("bad videoid")
+    exit()
 
 
 url = "https://www.youtube.com/live_chat?v=" + videoid
@@ -112,14 +120,17 @@ while True:
                 if "liveChatPaidMessageRenderer" in action["addChatItemAction"]["item"]: #superchats hava a different JSON message to regular chats. I'll decipher later.
                     cashman_name=action["addChatItemAction"]["item"]["liveChatPaidMessageRenderer"]["authorName"]["simpleText"]
                     print(cashman_name+ " PAID SOME MONEY FOR A MESSAGE.")
-                elif "liveChatMembershipItemRenderer" in action["addChatItemAction"]["item"]: #same goes for the big messages that members sometimes send.
+                elif "liveChatMembershipItemRenderer" in action["addChatItemAction"]["item"]: #same goes for the big messages that members sometimes send. #2025-09-10 addition: which is the same renderer used for when someone joins the membership.
                     member_name=action["addChatItemAction"]["item"]["liveChatMembershipItemRenderer"]["authorName"]["simpleText"]
                     print("MEMBER "+member_name+" HAS SENT A BIG MESSAGE. I'M NOT SAYING WHAT IT IS.")
                 elif "liveChatPlaceholderItemRenderer" in action["addChatItemAction"]["item"]:# found this during a test on 2025-08-22. I'm not sure what it is. The exception meant I couldnt crosscheck the id with later msgs
                     print("PLACEHOLDER!   ID:"+action["addChatItemAction"]["item"]["liveChatPlaceholderItemRenderer"]["id"])
                 elif "liveChatSponsorshipsGiftPurchaseAnnouncementRenderer" in action["addChatItemAction"]["item"]: # found this at 00:30 on 2025-08-31. It's for gifted memberships. I can't believe I didn't think of it b4.
                     render=action["addChatItemAction"]["item"]["liveChatSponsorshipsGiftPurchaseAnnouncementRenderer"]
-                    print("PERSON "+render["authorName"]["simpleText"]+" GIFTED SOME MEMBERSHIPS TO THE AUDIENCE")
+                    print("PERSON "+render["header"]["liveChatSponsorshipsHeaderRenderer"]["authorName"]["simpleText"]+" GIFTED SOME MEMBERSHIPS TO THE AUDIENCE")
+                elif "liveChatSponsorshipsGiftRedemptionAnnouncementRenderer" in action["addChatItemAction"]["item"]: # 2025-09-10 00:42 another one for redeeming a gift
+                    render=action["addChatItemAction"]["item"]["liveChatSponsorshipsGiftRedemptionAnnouncementRenderer"]
+                    print("PERSON "+render["authorName"]["simpleText"]+" RECEIVED A GIFTED MEMBERSHIP")
                 else: # regular chat messages
                     txtmsg = action["addChatItemAction"]["item"]["liveChatTextMessageRenderer"]
                     author_name = txtmsg["authorName"]["simpleText"]
@@ -134,7 +145,8 @@ while True:
                 print("TICKER UPDATE WEEWOO WEEWOO WEEWOO")
             elif "replaceChatItemAction" in action: # 2025-08-22 oh, so that's what it's for
                 print("REPLACEACTION "+action["replaceChatItemAction"]["targetItemId"])
-
+            elif "removeChatItemByAuthorAction" in action: # 2025-09-11 I can only assume this removes all messages from a specific author.
+                print ("REMOVE ITEMS BY CHANNEL "+ action["removeChatItemByAuthorAction"]["externalChannelId"])
             #I know there will be other types of action and other types of renderer in the addChatItemAction. I've never captured a poll, for instance. That's why I have the else and the except below. They catch the unknowns.
 
             else:
