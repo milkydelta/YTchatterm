@@ -34,13 +34,21 @@ ua = 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0'
 if len(sys.argv) == 2:
     arg = sys.argv[1]
     if arg[0] == '@':
-        page = requests.get("https://www.youtube.com/"+arg+"/live").text
-        found = re.findall('url":"/'+arg+'/live",(.+?)"videoId":"(.+?)"', page)
+        print("Getting live page for "+arg, file=sys.stderr)
+        page = requests.get("https://www.youtube.com/"+arg+"/live").text 
+        found = re.findall('property="og:url" content="(.+?)v=(.+?)">', page) 
         if len(found) == 0:
             print("No Live Streams available for that channel. Check your spelling, or provide a video ID.", file=sys.stderr)
             exit()
-        else:
-            videoid=found[0][1] # If you ever get an exception here, that means that the initial live page has changed construction. Let me know about it, and then provide a stream videoid instead.
+        else: # If you ever get an exception here, that means that the initial live page has changed construction. Let me know about it, and then provide a stream videoid instead.
+            videoid=found[0][1] 
+            # A channel can have multiple live and waiting streams. The /live page will only show one, so we should say which.
+            print("Found videoid: "+videoid, file=sys.stderr)
+            found = re.findall('property="og:title" content="(.+?)">', page)
+            if len(found) != 0:
+                print("Video Title: "+found[0], file=sys.stderr)
+
+
     elif len(arg) == 11:
         videoid=arg
     else:
@@ -84,11 +92,12 @@ while True:
 
     contResp = r2.json()
 
-    # 2025-08-23 00:03 //I analysed a DARN dump from a stream that hadn't started yet. Apparently, those use a different structure for the continuation part of the json response.
-    #                    Running streams use invalidationContinuation and waiting streams use timedContinuation. I should probably rework this to cope with both at the same time.
+    # Get the next token from the payload
     try:
-        continuation_token = contResp["continuationContents"]["liveChatContinuation"]["continuations"][0]["invalidationContinuationData"]["continuation"]
-        #continuation_token = contResp["continuationContents"]["liveChatContinuation"]["continuations"][0]["timedContinuationData"]["continuation"]
+        if "invalidationContinuationData" in contResp["continuationContents"]["liveChatContinuation"]["continuations"][0]: # running stream
+            continuation_token = contResp["continuationContents"]["liveChatContinuation"]["continuations"][0]["invalidationContinuationData"]["continuation"]
+        else: # waiting stream
+            continuation_token = contResp["continuationContents"]["liveChatContinuation"]["continuations"][0]["timedContinuationData"]["continuation"]
     except Exception as e:
         print(e)
         print("DARN!")
