@@ -36,12 +36,13 @@ if len(sys.argv) == 2:
     if arg[0] == '@':
         print("Getting live page for "+arg, file=sys.stderr)
         page = requests.get("https://www.youtube.com/"+arg+"/live").text 
-        found = re.findall('property="og:url" content="(.+?)v=(.+?)">', page) 
+        found = re.findall('property="og:url" content="(.+?)">', page)
+        found = re.findall('v=(.+)', found[0])
         if len(found) == 0:
             print("No Live Streams available for that channel. Check your spelling, or provide a video ID.", file=sys.stderr)
             exit()
         else: # If you ever get an exception here, that means that the initial live page has changed construction. Let me know about it, and then provide a stream videoid instead.
-            videoid=found[0][1] 
+            videoid=found[0] 
             # A channel can have multiple live and waiting streams. The /live page will only show one, so we should say which.
             print("Found videoid: "+videoid, file=sys.stderr)
             found = re.findall('property="og:title" content="(.+?)">', page)
