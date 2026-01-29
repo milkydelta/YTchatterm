@@ -54,6 +54,9 @@ if len(sys.argv) == 2:
     else:
         print("bad argument")
         exit()
+else:
+    print("bad argument count")
+    exit()
 
 url = "https://www.youtube.com/live_chat?v=" + videoid
 
@@ -140,8 +143,8 @@ while True:
                     message_id  = txtmsg["id"]
                     timestamp   = txtmsg["timestampUsec"]
                     print(timestamp+"  "+message_id[0:15]+"  "+author_name.ljust(15, ' ')+":   "+actiontomessage(action)[0:180])
-            elif "addBannerToLiveChatCommand" in action: # It's been long enough that I've forgotten what banners are.
-                print("BANNER DETECTED! SKIPPING!")
+            elif "addBannerToLiveChatCommand" in action: # It's been long enough that I've forgotten what banners are. #2026-01-26 02:57 I still don't know, but these also appear for Q&As.
+                print("BANNER DETECTED! SKIPPING!") # 2026-01-26 03:01 Banners also appear when a message gets pinned.
             elif "removeChatItemAction" in action: # These don't appear in replay files. I assume they're for when mods remove stuff. //confirmed 2025-08-22 20:20
                 print('removeChatItemAction')
             elif "addLiveChatTickerItemAction" in action: # This is for the "recent things" ticker at the top of the chat. It's a bit redundant because anything that causes a ticker update will also cause an addChatItem.
@@ -151,6 +154,8 @@ while True:
             elif "removeChatItemByAuthorAction" in action: # 2025-09-11 I can only assume this removes all messages from a specific author.
                 print ("REMOVE ITEMS BY CHANNEL "+ action["removeChatItemByAuthorAction"]["externalChannelId"])
             #I know there will be other types of action and other types of renderer in the addChatItemAction. I've never captured a poll, for instance. That's why I have the else and the except below. They catch the unknowns.
+            elif "removeBannerForLiveChatCommand" in action: #2026-01-26 03:05
+                print ("REMOVING BANNER "+ action["removeBannerForLiveChatCommand"]["targetActionId"])
 
             else:
                 print("UNKNOWN ACTION DETECTED! DUMPING ACTION!")
